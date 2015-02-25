@@ -1,0 +1,56 @@
+
+<workflow-app name="EBCDIC_Parser" xmlns="uri:oozie:workflow:0.4">
+    <start to="ebcidic_to_ascii"/>
+    <action name="ebcidic_to_ascii">
+        <hive xmlns="uri:oozie:hive-action:0.2">
+            <job-tracker>${jobTracker}</job-tracker>
+            <name-node>${nameNode}</name-node>
+              <job-xml>hive-site2.xml</job-xml>
+            <script>hive/${ebcidic_to_ascii_hive_script}</script>
+              <param>tblName=${tableName}</param>
+              <param>mainFrameJar=${pathToMainframeJar}</param>
+              <param>destDir=${destination_dir}</param>
+              <param>cblPath=${copyBookPath}</param>
+        </hive>
+        <ok to="fsDelete"/>
+        <error to="kill"/>
+    </action>
+    <action name="fsDelete">
+        <fs>
+              <delete path='${nameNode}${layoutPath}'/>
+              <mkdir path='${nameNode}${layoutPath}'/>
+        </fs>
+        <ok to="create_ascii"/>
+        <error to="kill"/>
+    </action>
+    <action name="create_ascii">
+        <hive xmlns="uri:oozie:hive-action:0.2">
+            <job-tracker>${jobTracker}</job-tracker>
+            <name-node>${nameNode}</name-node>
+              <job-xml>hive-site2.xml</job-xml>
+            <script>hive/${createAsciiTbl}</script>
+              <param>tblName=${asciiTableName}</param>
+              <param>mainFrameJar=${pathToMainframeJar}</param>
+              <param>destDir=${ascii_dest_dir}</param>
+        </hive>
+        <ok to="insert_to_ascii"/>
+        <error to="kill"/>
+    </action>
+    <action name="insert_to_ascii">
+        <hive xmlns="uri:oozie:hive-action:0.2">
+            <job-tracker>${jobTracker}</job-tracker>
+            <name-node>${nameNode}</name-node>
+              <job-xml>hive-site2.xml</job-xml>
+            <script>hive/insertLayout.hql</script>
+              <param>mainFrameJar=${pathToMainframeJar}</param>
+              <param>insertFrom=${insertFromTbl}</param>
+              <param>insertTo=${insertToTbl}</param>
+        </hive>
+        <ok to="end"/>
+        <error to="kill"/>
+    </action>
+    <kill name="kill">
+        <message>Action failed, error message[${wf:errorMessage(wf:lastErrorNode())}]</message>
+    </kill>
+    <end name="end"/>
+</workflow-app>

@@ -1,0 +1,12 @@
+target/
+.project
+.DS_Store
+.settings/
+.classpath
+.externalToolBuilders
+.idea
+*.iml
+test-output/
+/target
+/metastore_db
+metastore_db/
